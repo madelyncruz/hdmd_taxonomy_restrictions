@@ -1,0 +1,6 @@
+name = HDMD Taxonomy Term Restrictions
+description = Restrict users from deleting the terms that are being used by the system.
+package = HDMD
+core = 7.x
+
+dependencies[] = taxonomy

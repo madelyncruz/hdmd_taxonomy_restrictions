@@ -1,0 +1,66 @@
+<?php
+
+/**
+ * Implements hook_form_alter().
+ *
+ * @todo
+ *    Checks if term has children.
+ *    Checks if term contains data.
+ *    Disable delete button.
+ */
+
+function hdmd_term_restrictions_form_taxonomy_form_term_alter(&$form, &$form_state) {
+  // Checking if we are on the delete confirmation form.
+  if (isset($form['delete'])) {
+    // Getting the term id.
+    $tid = $form['tid']['#value'];
+
+    // Check if term has children
+    $children = taxonomy_get_children($tid);
+
+    if (count($children) > 0) {
+      $message = 'This term has children and cannot be deleted until the children of this term has been deleted.';
+    }
+    else if (_get_taxonomy_contains_data($tid)) {
+      $message = 'This term is being used by the system and cannot be deleted.';
+    }
+
+    if (isset($message)) {
+      drupal_set_message(t($message), 'error');
+      $form['description']['#markup'] = NULL;
+      $form['actions']['submit']['#disabled'] = TRUE;
+    }
+  }
+}
+
+function _get_taxonomy_contains_data($tid) {
+  $contains_data = FALSE;
+
+  // Load fields available.
+  $fields = field_info_fields();
+
+  foreach ($fields as $field) {
+    // Field must be a taxonomy_term_reference.
+    if ($field['type'] != 'taxonomy_term_reference') {
+      continue;
+    }
+
+    $field_name = $field['field_name'];
+
+    $table_name = 'field_data_' . $field_name;
+
+    $query = db_select($table_name, 'f_' . $field_name)
+            ->condition('f_' . $field_name . '.' . $field_name . '_tid', $tid)
+            ->fields('f_' . $field_name, array());
+
+    $results = $query->execute()->fetchField();
+
+    if (empty($results)) {
+      continue;
+    }
+
+    $contains_data = TRUE;
+  }
+
+  return $contains_data;
+}
