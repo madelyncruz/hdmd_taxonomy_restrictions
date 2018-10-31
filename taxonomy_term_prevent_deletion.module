@@ -1,15 +1,15 @@
 <?php
 
 /**
- * Implements hook_form_alter().
+ * @file
  *
- * @todo
- *    Checks if term has children.
- *    Checks if term contains data.
- *    Disable delete button.
+ * Prevent user from deleting terms that are being used by the system.
  */
 
-function hdmd_term_restrictions_form_taxonomy_form_term_alter(&$form, &$form_state) {
+/**
+ * Implements hook_form_alter().
+ */
+function taxonomy_term_prevent_deletion_form_taxonomy_form_term_alter(&$form, &$form_state) {
   // Checking if we are on the delete confirmation form.
   if (isset($form['delete'])) {
     // Getting the term id.
@@ -21,23 +21,33 @@ function hdmd_term_restrictions_form_taxonomy_form_term_alter(&$form, &$form_sta
     if (count($children) > 0) {
       $message = 'This term has children and cannot be deleted until the children of this term has been deleted.';
     }
-    else if (_get_taxonomy_contains_data($tid)) {
+    else if (_get_taxonomy_term_contains_node($tid)) {
       $message = 'This term is being used by the system and cannot be deleted.';
     }
 
+    // Check if has a message.
     if (isset($message)) {
       drupal_set_message(t($message), 'error');
+
+      // Remove description.
       $form['description']['#markup'] = NULL;
+
+      // Disable submit.
       $form['actions']['submit']['#disabled'] = TRUE;
     }
   }
 }
 
-function _get_taxonomy_contains_data($tid) {
-  $contains_data = FALSE;
+function _get_taxonomy_term_contains_node($tid) {
+  $has_node = FALSE;
 
   // Load fields available.
   $fields = field_info_fields();
+
+  // If no fields available, then return false.
+  if (empty($fields)) {
+    return $has_node;
+  }
 
   foreach ($fields as $field) {
     // Field must be a taxonomy_term_reference.
@@ -59,8 +69,8 @@ function _get_taxonomy_contains_data($tid) {
       continue;
     }
 
-    $contains_data = TRUE;
+    $has_node = TRUE;
   }
 
-  return $contains_data;
+  return $has_node;
 }
