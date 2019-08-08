@@ -1,5 +1,0 @@
-name = Taxonomy Term Prevent Deletion
-description = Prevent user from deleting the terms that are being used by the system.
-core = 7.x
-
-dependencies[] = taxonomy

@@ -1,0 +1,6 @@
+name: Taxonomy Term Prevent Deletion
+type: module
+description: 'Prevent user from deleting the terms that are being used by the system.'
+core: 8.x
+dependencies:
+  - drupal:taxonomy
